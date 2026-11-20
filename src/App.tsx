@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { historicoInicial, SincronizarNavegacao } from '@/lib/rotaOculta'
 import { Carregando } from '@/components/common/Estados'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { ITENS_EM_BREVE } from '@/components/layout/nav'
@@ -53,9 +54,13 @@ function PaginaInicial() {
 
 const P = RequirePermission
 
+// calculada uma vez, antes do primeiro render (lê e limpa o endereço da barra)
+const HISTORICO = historicoInicial()
+
 export function App() {
   return (
-    <BrowserRouter>
+    <MemoryRouter initialEntries={HISTORICO.entradas} initialIndex={HISTORICO.indice}>
+      <SincronizarNavegacao />
       <Suspense fallback={<Carregando />}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -123,6 +128,6 @@ export function App() {
           </Route>
         </Routes>
       </Suspense>
-    </BrowserRouter>
+    </MemoryRouter>
   )
 }
