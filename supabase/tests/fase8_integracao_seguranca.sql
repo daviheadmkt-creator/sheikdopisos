@@ -73,7 +73,7 @@ begin
   assert v_ent is not null, 'INT-8: entrega criada na confirmação';
 
   -- ------------------------------------------------------------ Caixa: abre e recebe o PIX
-  select id into v_caixa from public.contas_financeiras where tipo = 'caixa' and ativo limit 1;
+  insert into public.contas_financeiras (nome, tipo, saldo_inicial) values ('Caixa teste F8', 'caixa', 0) returning id into v_caixa;
   v_sessao := public.abrir_caixa(v_caixa, public.saldo_conta(v_caixa));
   select id into v_parc from public.titulo_parcelas where titulo_id = v_tit_rec and forma_prevista = 'pix';
   perform public.liquidar_parcela(jsonb_build_object('parcela_id', v_parc, 'conta_id', v_caixa, 'principal', '191.30', 'forma', 'pix'));
@@ -156,8 +156,16 @@ begin
 
   perform set_config('request.jwt.claims', '{}', true);
   set local role anon;
-  assert (select count(*) from public.clientes) = 0, 'SEG-12: visitante não lê clientes';
-  assert (select count(*) from public.produtos) = 0, 'SEG-13: visitante não lê produtos';
+  begin
+    perform 1 from public.clientes limit 1;
+    raise exception 'SEG-12 FALHOU: visitante lê clientes';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform 1 from public.produtos limit 1;
+    raise exception 'SEG-13 FALHOU: visitante lê produtos';
+  exception when insufficient_privilege then null;
+  end;
   begin
     perform public.tem_permissao('clientes', 'ler');
     raise exception 'SEG-14 FALHOU: visitante executa funções';

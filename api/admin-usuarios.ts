@@ -4,6 +4,7 @@
 // cliente do próprio chamador, então as políticas RLS (ex.: só administrador concede "administrador") valem.
 import { createClient } from '@supabase/supabase-js'
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const PERFIS = ['administrador', 'gerente', 'vendedor', 'estoquista', 'comprador', 'financeiro', 'logistica']
 
 const json = (body: unknown, status = 200) =>
@@ -47,9 +48,9 @@ export async function POST(request: Request): Promise<Response> {
         const email = String(body.email ?? '').trim().toLowerCase()
         const senha = String(body.senha ?? '')
         const perfis = Array.isArray(body.perfis) ? body.perfis.map(String) : []
-        if (nome.length < 2) return json({ erro: 'Informe o nome' }, 400)
-        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ erro: 'E-mail inválido' }, 400)
-        if (senha.length < 10 || !/[A-Za-z]/.test(senha) || !/\d/.test(senha))
+        if (nome.length < 2 || nome.length > 120) return json({ erro: 'Informe o nome (até 120 caracteres)' }, 400)
+        if (email.length > 254 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ erro: 'E-mail inválido' }, 400)
+        if (senha.length < 10 || senha.length > 72 || !/[A-Za-z]/.test(senha) || !/\d/.test(senha))
           return json({ erro: 'A senha provisória deve ter ao menos 10 caracteres, com letras e números' }, 400)
         if (perfis.length === 0 || perfis.some((p) => !PERFIS.includes(p))) return json({ erro: 'Selecione ao menos um perfil válido' }, 400)
 
@@ -60,8 +61,10 @@ export async function POST(request: Request): Promise<Response> {
           user_metadata: { nome },
         })
         if (errCriar || !criado.user) {
-          const msg = /already|registered|exists/i.test(errCriar?.message ?? '') ? 'Já existe um usuário com este e-mail' : errCriar?.message
-          return json({ erro: msg ?? 'Falha ao criar usuário' }, 400)
+          if (/already|registered|exists/i.test(errCriar?.message ?? '')) return json({ erro: 'Já existe um usuário com este e-mail' }, 400)
+          // Detalhe técnico fica só no log do servidor
+          console.error('createUser:', errCriar?.message)
+          return json({ erro: 'Não foi possível criar o usuário. Verifique os dados e tente novamente.' }, 400)
         }
 
         const { error: errPerfis } = await caller
@@ -78,14 +81,23 @@ export async function POST(request: Request): Promise<Response> {
         if (!(await pode('editar'))) return json({ erro: 'Sem permissão para editar usuários' }, 403)
         const id = String(body.id ?? '')
         const ativo = body.ativo === true
+        if (!UUID.test(id)) return json({ erro: 'Usuário inválido' }, 400)
         if (id === auth.user.id) return json({ erro: 'Você não pode desativar o próprio usuário' }, 400)
 
         const { data: alterado, error } = await caller.from('usuarios').update({ ativo }).eq('id', id).select('id')
-        if (error) return json({ erro: error.message }, 400)
+        if (error) {
+          console.error('usuarios.update:', error.message)
+          return json({ erro: 'Não foi possível alterar o usuário' }, 400)
+        }
         if (!alterado?.length) return json({ erro: 'Usuário não encontrado ou sem permissão' }, 403)
 
         const { error: errBan } = await admin.auth.admin.updateUserById(id, { ban_duration: ativo ? 'none' : '876000h' })
-        if (errBan) return json({ erro: errBan.message }, 500)
+        if (errBan) {
+          // Desfaz a marcação para o cadastro não divergir do acesso real
+          await caller.from('usuarios').update({ ativo: !ativo }).eq('id', id)
+          console.error('updateUserById:', errBan.message)
+          return json({ erro: 'Não foi possível alterar o acesso do usuário. Tente novamente.' }, 500)
+        }
         return json({ ok: true })
       }
 

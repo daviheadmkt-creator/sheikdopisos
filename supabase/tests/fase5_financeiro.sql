@@ -27,7 +27,7 @@ begin
   if v_admin is null then raise exception 'Crie o primeiro usuário antes de rodar este teste'; end if;
   perform set_config('request.jwt.claims', json_build_object('sub', v_admin, 'role', 'authenticated')::text, true);
 
-  select id into v_caixa from public.contas_financeiras where tipo = 'caixa' limit 1;
+  insert into public.contas_financeiras (nome, tipo, saldo_inicial) values ('Caixa teste F5', 'caixa', 0) returning id into v_caixa;
   insert into public.contas_financeiras (nome, tipo, saldo_inicial) values ('Banco teste F5', 'banco', 1000) returning id into v_banco;
 
   -- 1. Caixa fechado não aceita movimento

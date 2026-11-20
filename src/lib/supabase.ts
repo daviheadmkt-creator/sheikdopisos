@@ -55,6 +55,8 @@ export function mensagemErro(erro: unknown): string {
     case '23503':
       return 'Registro vinculado a outro cadastro inexistente ou em uso.'
     case '42501':
+      // Mensagens de regra de negócio (ex.: limite de desconto) são exibidas; as técnicas do banco, não.
+      if (msg && !/permission denied|row-level security|violates/i.test(msg)) return msg
       return 'Você não tem permissão para executar esta operação.'
     case 'PGRST116':
       return 'Registro não encontrado.'

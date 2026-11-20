@@ -62,8 +62,11 @@ begin
 
   -- RLS: usuário anônimo não enxerga clientes
   set local role anon;
-  select exists (select 1 from public.clientes) into v_ok;
-  assert not v_ok, 'Usuário anônimo conseguiu ler clientes';
+  begin
+    select exists (select 1 from public.clientes) into v_ok;
+    assert not v_ok, 'Usuário anônimo conseguiu ler clientes';
+  exception when insufficient_privilege then null; -- sem privilégio algum na tabela
+  end;
   reset role;
 
   raise notice 'FASE 1: TODOS OS TESTES PASSARAM';

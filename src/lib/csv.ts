@@ -3,7 +3,17 @@ export interface ColunaCsv<T> {
   valor: (linha: T) => string | number | null | undefined
 }
 
-const escapar = (v: string) => (/[";\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v)
+/**
+ * Neutraliza injeção de fórmula (CSV injection): um texto iniciado por = + - @ tab ou CR seria
+ * executado como fórmula pelo Excel. Prefixa com apóstrofo, exceto números negativos legítimos.
+ */
+const neutralizarFormula = (v: string) =>
+  /^[=+\-@\t\r]/.test(v) && !/^-\s*(R\$\s*)?[\d.,]+%?$/.test(v) ? `'${v}` : v
+
+const escapar = (v: string) => {
+  const s = neutralizarFormula(v)
+  return /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+}
 
 /** Gera CSV no padrão do Excel brasileiro: separador ";" e decimais com vírgula. */
 export function gerarCsv<T>(linhas: T[], colunas: ColunaCsv<T>[]): string {
