@@ -15,11 +15,11 @@ import { Input, NativeSelect, Textarea } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { paraCanonico } from '@/lib/decimal'
-import { formatarData, mascararCEP, mascararDocumento, mascararTelefone } from '@/lib/format'
+import { dataLocalISO, formatarData, mascararCEP, mascararDocumento, mascararTelefone } from '@/lib/format'
 import { mensagemErro } from '@/lib/supabase'
 import { UFS } from '@/lib/validators/documento'
 import { buscarCep, listarVendedores, obterCliente, salvarCliente, type ClienteDB } from './api'
-import { clienteParaPayload, clienteSchema, clienteVazio, enderecoVazio, type ClienteForm } from './schema'
+import { clienteParaPayload, clienteSchema, clienteVazio, enderecoVazio, idade, type ClienteForm } from './schema'
 
 const hoje = dataLocalISO()
 const idadeTexto = (nasc: string) => {

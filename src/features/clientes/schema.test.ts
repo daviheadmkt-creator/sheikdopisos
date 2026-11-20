@@ -1,4 +1,4 @@
-import { clienteParaPayload, clienteSchema, clienteVazio, enderecoVazio } from './schema'
+import { clienteParaPayload, clienteSchema, clienteVazio, enderecoVazio, idade } from './schema'
 
 const endereco = {
   ...enderecoVazio(true),
@@ -78,5 +78,38 @@ describe('clienteParaPayload', () => {
   it('descarta razão social de pessoa física', () => {
     const { cliente } = clienteParaPayload({ ...clienteVazio, nome: 'Ana', razao_social: 'X' })
     expect(cliente.razao_social).toBe('')
+  })
+})
+
+describe('data de nascimento e contato', () => {
+  it('aceita nascimento válido e recusa data futura ou muito antiga', () => {
+    expect(clienteSchema.safeParse({ ...clienteVazio, nome: 'Maria', data_nascimento: '1985-07-14' }).success).toBe(true)
+    expect(clienteSchema.safeParse({ ...clienteVazio, nome: 'Maria', data_nascimento: '2999-01-01' }).success).toBe(false)
+    expect(clienteSchema.safeParse({ ...clienteVazio, nome: 'Maria', data_nascimento: '1899-12-31' }).success).toBe(false)
+  })
+
+  it('calcula a idade considerando se o aniversário já passou', () => {
+    expect(idade('1985-07-14', '2026-07-13')).toBe(40)
+    expect(idade('1985-07-14', '2026-07-14')).toBe(41)
+    expect(idade('', '2026-07-14')).toBeNull()
+  })
+
+  it('PF grava o próprio nascimento; PJ grava contato e nascimento do contato', () => {
+    const pf = clienteParaPayload({ ...clienteVazio, nome: 'Ana', data_nascimento: '1990-03-02', contato_nome: 'X' })
+    expect(pf.cliente.data_nascimento).toBe('1990-03-02')
+    expect(pf.cliente.contato_nome).toBe('')
+    const pj = clienteParaPayload({
+      ...clienteVazio,
+      tipo_pessoa: 'PJ',
+      nome: 'Construtora',
+      razao_social: 'Construtora Ltda',
+      documento: '11.222.333/0001-81',
+      data_nascimento: '1990-03-02',
+      contato_nome: ' Carlos Lima ',
+      contato_nascimento: '1978-11-20',
+    })
+    expect(pj.cliente.data_nascimento).toBe('')
+    expect(pj.cliente.contato_nome).toBe('Carlos Lima')
+    expect(pj.cliente.contato_nascimento).toBe('1978-11-20')
   })
 })
