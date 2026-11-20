@@ -34,6 +34,9 @@ export interface EnderecoDB {
 
 export interface ClienteDB extends Omit<ClienteLista, 'cliente_enderecos'> {
   inscricao_estadual: string | null
+  data_nascimento: string | null
+  contato_nome: string | null
+  contato_nascimento: string | null
   limite_credito: number
   observacoes: string | null
   created_at: string

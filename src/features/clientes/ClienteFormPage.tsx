@@ -21,6 +21,12 @@ import { UFS } from '@/lib/validators/documento'
 import { buscarCep, listarVendedores, obterCliente, salvarCliente, type ClienteDB } from './api'
 import { clienteParaPayload, clienteSchema, clienteVazio, enderecoVazio, type ClienteForm } from './schema'
 
+const hoje = dataLocalISO()
+const idadeTexto = (nasc: string) => {
+  const i = idade(nasc)
+  return i !== null && i >= 0 ? `${i} ano${i === 1 ? '' : 's'}` : undefined
+}
+
 function dbParaForm(c: ClienteDB): ClienteForm {
   const enderecos = [...c.cliente_enderecos].sort((a, b) => Number(b.principal) - Number(a.principal))
   return {
@@ -36,6 +42,9 @@ function dbParaForm(c: ClienteDB): ClienteForm {
     limite_credito: paraCanonico(c.limite_credito, 2),
     status: c.status as ClienteForm['status'],
     observacoes: c.observacoes ?? '',
+    data_nascimento: c.data_nascimento ?? '',
+    contato_nome: c.contato_nome ?? '',
+    contato_nascimento: c.contato_nascimento ?? '',
     enderecos: enderecos.map((e) => ({
       id: e.id,
       descricao: e.descricao ?? '',
@@ -222,7 +231,23 @@ export function ClienteFormPage() {
                       <Field label="Inscrição estadual" htmlFor="ie" erro={erros.inscricao_estadual?.message}>
                         <Input id="ie" {...register('inscricao_estadual')} placeholder="ou ISENTO" />
                       </Field>
+                      <Field label="Nome do contato" htmlFor="contato" erro={erros.contato_nome?.message} ajuda="Pessoa responsável pelas compras">
+                        <Input id="contato" {...register('contato_nome')} />
+                      </Field>
+                      <Field
+                        label="Nascimento do contato"
+                        htmlFor="contato_nasc"
+                        erro={erros.contato_nascimento?.message}
+                        ajuda={idadeTexto(watch('contato_nascimento'))}
+                      >
+                        <Input id="contato_nasc" type="date" min="1900-01-01" max={hoje} {...register('contato_nascimento')} aria-invalid={!!erros.contato_nascimento} />
+                      </Field>
                     </>
+                  )}
+                  {tipo === 'PF' && (
+                    <Field label="Data de nascimento" htmlFor="nasc" erro={erros.data_nascimento?.message} ajuda={idadeTexto(watch('data_nascimento'))}>
+                      <Input id="nasc" type="date" min="1900-01-01" max={hoje} {...register('data_nascimento')} aria-invalid={!!erros.data_nascimento} />
+                    </Field>
                   )}
                 </CardContent>
               </Card>

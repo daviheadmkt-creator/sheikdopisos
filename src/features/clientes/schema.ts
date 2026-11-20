@@ -6,6 +6,27 @@ const telefoneOpcional = z
   .string()
   .refine((v) => [0, 10, 11].includes(somenteDigitos(v).length), 'Telefone deve ter DDD + 8 ou 9 dígitos')
 
+/** Hoje no fuso local, AAAA-MM-DD. */
+const hojeISO = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** Data de nascimento opcional: entre 01/01/1900 e hoje. */
+export const dataNascimento = z
+  .string()
+  .refine((v) => !v || /^\d{4}-\d{2}-\d{2}$/.test(v), 'Data inválida')
+  .refine((v) => !v || v >= '1900-01-01', 'Data muito antiga')
+  .refine((v) => !v || v <= hojeISO(), 'A data não pode ser futura')
+
+/** Idade completa em anos na data de referência (padrão: hoje). */
+export function idade(nascimento: string, referencia = hojeISO()): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(nascimento)) return null
+  const [a, m, d] = nascimento.split('-').map(Number)
+  const [ra, rm, rd] = referencia.split('-').map(Number)
+  return ra - a - (rm < m || (rm === m && rd < d) ? 1 : 0)
+}
+
 export const enderecoSchema = z.object({
   id: z.string().optional(),
   descricao: z.string().trim().max(60, 'Máximo de 60 caracteres'),
@@ -37,6 +58,9 @@ export const clienteSchema = z
     limite_credito: z.string().refine((v) => v === '' || ehDecimalCanonico(v), 'Valor inválido'),
     status: z.enum(['ativo', 'inativo', 'bloqueado']),
     observacoes: z.string().max(2000),
+    data_nascimento: dataNascimento,
+    contato_nome: z.string().trim().max(120),
+    contato_nascimento: dataNascimento,
     enderecos: z.array(enderecoSchema),
   })
   .superRefine((v, ctx) => {
@@ -82,6 +106,9 @@ export const clienteVazio: ClienteForm = {
   limite_credito: '',
   status: 'ativo',
   observacoes: '',
+  data_nascimento: '',
+  contato_nome: '',
+  contato_nascimento: '',
   enderecos: [],
 }
 
@@ -103,6 +130,10 @@ export function clienteParaPayload(v: ClienteForm, id?: string) {
       limite_credito: v.limite_credito || '0',
       status: v.status,
       observacoes: v.observacoes.trim(),
+      // PF: nascimento do cliente · PJ: contato da empresa e o nascimento dele
+      data_nascimento: v.tipo_pessoa === 'PF' ? v.data_nascimento : '',
+      contato_nome: v.tipo_pessoa === 'PJ' ? v.contato_nome.trim() : '',
+      contato_nascimento: v.tipo_pessoa === 'PJ' ? v.contato_nascimento : '',
     },
     enderecos: v.enderecos.map((e) => ({ ...e, id: e.id ?? '', cep: somenteDigitos(e.cep), uf: e.uf.toUpperCase() })),
   }
