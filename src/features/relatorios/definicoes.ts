@@ -69,7 +69,7 @@ export const RELATORIOS: Relatorio[] = [
     descricao: 'Faturamento agrupado por dia ou por mês.',
     extra: { rotulo: 'Agrupar por', padrao: 'dia', opcoes: [{ valor: 'dia', label: 'Dia' }, { valor: 'mes', label: 'Mês' }] },
     colunas: [
-      { chave: 'periodo', titulo: 'Período', tipo: 'data', largura: 12 },
+      { chave: 'periodo', titulo: 'Período', tipo: 'texto', largura: 12 },
       { chave: 'qtd_vendas', titulo: 'Vendas', tipo: 'inteiro', total: 'soma' },
       { chave: 'subtotal', titulo: 'Subtotal', tipo: 'moeda', total: 'soma' },
       { chave: 'descontos', titulo: 'Descontos', tipo: 'moeda', total: 'soma' },
@@ -79,7 +79,11 @@ export const RELATORIOS: Relatorio[] = [
     ],
     carregar: async (f) => {
       const r = await executarRelatorio<Linha>('relatorio_faturamento', { ...periodo(f), p_agrupar: f.extra || 'dia' })
-      return f.extra === 'mes' ? r.map((x) => ({ ...x, periodo: `${x.periodo}-01` })) : r
+      // dia → 19/11/2026 · mês → 11/2026
+      return r.map((x) => {
+        const [a, m, d] = String(x.periodo).split('-')
+        return { ...x, periodo: f.extra === 'mes' ? `${m}/${a}` : `${d}/${m}/${a}` }
+      })
     },
   },
   {

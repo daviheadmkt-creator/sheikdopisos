@@ -35,6 +35,7 @@ import { paraCanonico } from '@/lib/decimal'
 import { dataLocalISO, formatarData, mascararTelefone } from '@/lib/format'
 import { mensagemErro } from '@/lib/supabase'
 import { somenteDigitos } from '@/lib/validators/documento'
+import { descreverCondicao, listarCondicoes } from '@/features/configuracoes/api'
 
 const schema = z.object({
   cliente_nome: z.string().trim().max(150),
@@ -78,6 +79,7 @@ export function OrcamentoFormPage() {
   const orc = useQuery({ queryKey: ['orcamentos', id], queryFn: () => obterOrcamento(id!), enabled: !novo })
   const params = useQuery({ queryKey: ['parametros-comerciais'], queryFn: obterParametros, staleTime: 10 * 60_000 })
   const vendedores = useQuery({ queryKey: ['vendedores'], queryFn: listarVendedores, staleTime: 5 * 60_000 })
+  const condicoes = useQuery({ queryKey: ['condicoes-pagamento'], queryFn: listarCondicoes, staleTime: 10 * 60_000 })
   const p = params.data ?? PARAMETROS_PADRAO
   const sobraPadrao = paraCanonico(p.perc_sobra_padrao, 2)
 
@@ -324,7 +326,23 @@ export function OrcamentoFormPage() {
             <CardContent>
               <fieldset disabled={!editavel} className="grid gap-4 sm:grid-cols-2">
                 <Field label="Condições de pagamento" ajuda="Ex.: 10% de entrada + 3x no cartão">
-                  <Textarea rows={3} {...register('condicoes_pagamento')} />
+                  <div className="space-y-2">
+                    {!!condicoes.data?.length && editavel && (
+                      <NativeSelect
+                        value=""
+                        onChange={(e) => {
+                          const c = condicoes.data?.find((x) => x.id === e.target.value)
+                          if (!c) return
+                          const atual = form.getValues('condicoes_pagamento').trim()
+                          setValue('condicoes_pagamento', `${atual ? `${atual}\n` : ''}${c.nome} (${descreverCondicao(c)})`, { shouldDirty: true })
+                        }}
+                      >
+                        <option value="">Inserir condição cadastrada…</option>
+                        {condicoes.data.filter((c) => c.ativo && c.uso !== 'compras').map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                      </NativeSelect>
+                    )}
+                    <Textarea rows={3} {...register('condicoes_pagamento')} />
+                  </div>
                 </Field>
                 <Field label="Observações ao cliente">
                   <Textarea rows={3} {...register('observacoes')} />

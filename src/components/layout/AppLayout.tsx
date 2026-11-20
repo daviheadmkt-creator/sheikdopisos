@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
+import { Carregando } from '@/components/common/Estados'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Dialog, DialogTitle, SheetContent } from '@/components/ui/dialog'
 import { modoVisualizacao } from '@/lib/supabase'
@@ -57,7 +58,10 @@ export function AppLayout() {
         )}
         <Header onAbrirMenu={() => setMenuMobile(true)} />
         <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
-          <Outlet />
+          {/* menu e cabeçalho permanecem visíveis enquanto a tela é carregada */}
+          <Suspense fallback={<Carregando />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

@@ -16,6 +16,7 @@ import { deCentavos } from '@/features/comercial/calculos'
 import { listarDepositos } from '@/features/estoque/api'
 import { ProdutoBusca, Qtd, QuantidadeInput } from '@/features/estoque/componentes'
 import { listarFornecedoresAtivos } from '@/features/fornecedores/api'
+import { listarCondicoes } from '@/features/configuracoes/api'
 import { escalar } from '@/features/produtos/regras'
 import { paraCanonico } from '@/lib/decimal'
 import { dataLocalISO, formatarData, formatarMoeda } from '@/lib/format'
@@ -36,6 +37,7 @@ export function PedidoCompraPage() {
   const pedido = useQuery({ queryKey: ['compras', 'pedido', id], queryFn: () => obterPedidoCompra(id!), enabled: !novo })
   const fornecedores = useQuery({ queryKey: ['fornecedores', 'ativos'], queryFn: listarFornecedoresAtivos })
   const depositos = useQuery({ queryKey: ['estoque', 'depositos'], queryFn: listarDepositos })
+  const condicoes = useQuery({ queryKey: ['condicoes-pagamento'], queryFn: listarCondicoes, staleTime: 10 * 60_000 })
 
   const [fornecedorId, setFornecedorId] = useState('')
   const [previsao, setPrevisao] = useState('')
@@ -369,6 +371,24 @@ export function PedidoCompraPage() {
                 <span className="text-2xl font-semibold tabular-nums">{formatarMoeda(deCentavos(totais.total))}</span>
               </div>
               <fieldset disabled={!editavel} className="space-y-3 border-t pt-3">
+                {!!condicoes.data?.length && (
+                  <Field label="Condição padrão">
+                    <NativeSelect
+                      value=""
+                      onChange={(e) => {
+                        const c = condicoes.data?.find((x) => x.id === e.target.value)
+                        if (!c) return
+                        setCondicao(c.nome)
+                        setParcelas(String(c.parcelas))
+                        setPrimeiroVenc(String(c.primeiro_vencimento_dias))
+                        setIntervalo(String(c.intervalo_dias))
+                      }}
+                    >
+                      <option value="">Aplicar uma condição cadastrada…</option>
+                      {condicoes.data.filter((c) => c.ativo && c.uso !== 'vendas').map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                    </NativeSelect>
+                  </Field>
+                )}
                 <Field label="Condição de pagamento"><Input value={condicao} onChange={(e) => setCondicao(e.target.value)} placeholder="Ex.: boleto 30/60/90" /></Field>
                 <div className="grid grid-cols-3 gap-2">
                   <Field label="Parcelas"><Input inputMode="numeric" value={parcelas} onChange={(e) => setParcelas(e.target.value.replace(/\D/g, '').slice(0, 2) || '1')} /></Field>

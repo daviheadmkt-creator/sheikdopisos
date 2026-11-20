@@ -38,7 +38,7 @@ export interface NavGrupo {
 }
 
 /** Fase já liberada no sistema. Itens com fase maior aparecem como "em breve". */
-export const FASE_ATUAL = 7
+export const FASE_ATUAL = 8
 
 export const NAV: NavGrupo[] = [
   {

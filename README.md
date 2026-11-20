@@ -34,6 +34,11 @@ As migrações em `supabase/migrations/` são aplicadas em ordem e registradas e
 Os testes em `supabase/tests/` rodam em transação com ROLLBACK (não gravam nada) e devem exibir
 `FASE n: TODOS OS TESTES PASSARAM`. As fases 2 a 7 precisam de um administrador existente.
 
+### Testes automatizados
+- Unitários: `npm test` (82 testes).
+- Banco: `supabase/tests/fase1…fase8` — a fase 8 percorre o fluxo completo (compra → venda → caixa → entrega) e testa a segurança com os papéis reais (vendedor e visitante).
+- Homologação manual: `docs/HOMOLOGACAO.md`.
+
 ### Configuração de autenticação (painel do Supabase)
 - *Authentication › Sign In / Providers*: desative **Allow new users to sign up**.
 - *Authentication › URL Configuration*: Site URL `https://sheik-dos-pisos-erp.vercel.app` e Redirect URL

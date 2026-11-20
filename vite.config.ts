@@ -10,6 +10,21 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // bibliotecas em pacotes próprios: mudam pouco e ficam em cache entre versões do sistema
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (/[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/.test(id)) return 'react'
+          if (id.includes('@supabase')) return 'supabase'
+          if (id.includes('@radix-ui')) return 'radix'
+          if (/zod|react-hook-form|@hookform/.test(id)) return 'formularios'
+          return undefined
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'node',
