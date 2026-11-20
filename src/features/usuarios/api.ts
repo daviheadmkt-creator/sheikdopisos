@@ -1,5 +1,4 @@
-import { FunctionsHttpError } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { modoVisualizacao, supabase } from '@/lib/supabase'
 import type { Acao } from '@/features/auth/permissoes'
 
 export interface UsuarioLista {
@@ -33,16 +32,28 @@ export async function listarUsuarios() {
   return data as UsuarioLista[]
 }
 
+/** Chama a função de servidor /api/admin-usuarios (Vercel), enviando o token da sessão. */
 async function chamarFuncao(body: Record<string, unknown>) {
-  const { data, error } = await supabase.functions.invoke('admin-usuarios', { body })
-  if (error) {
-    if (error instanceof FunctionsHttpError) {
-      const corpo = await error.context.json().catch(() => null)
-      throw new Error(corpo?.erro ?? 'Falha ao executar a operação.')
-    }
-    throw new Error('Serviço de usuários indisponível. Verifique se a Edge Function "admin-usuarios" foi publicada.')
+  if (modoVisualizacao) throw new Error('Modo visualização: conecte o banco de dados para salvar.')
+  const { data: sessao } = await supabase.auth.getSession()
+  const token = sessao.session?.access_token
+  if (!token) throw new Error('Sessão expirada. Faça login novamente.')
+  let resposta: Response
+  try {
+    resposta = await fetch('/api/admin-usuarios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    })
+  } catch {
+    throw new Error('Serviço de usuários indisponível. Verifique sua conexão.')
   }
-  return data
+  const corpo = await resposta.json().catch(() => null)
+  if (!resposta.ok) {
+    if (resposta.status === 404) throw new Error('Serviço de usuários indisponível neste ambiente (use o site publicado ou "vercel dev").')
+    throw new Error(corpo?.erro ?? 'Falha ao executar a operação.')
+  }
+  return corpo
 }
 
 export const criarUsuario = (dados: { nome: string; email: string; senha: string; perfis: string[] }) =>

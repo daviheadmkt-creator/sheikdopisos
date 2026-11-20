@@ -1,6 +1,6 @@
 # ERP SHEIK DOS PISOS
 
-React + TypeScript + Tailwind + shadcn/ui + TanStack Query + React Hook Form/Zod, com Supabase (PostgreSQL, Auth, Storage, Edge Functions).
+React + TypeScript + Tailwind + shadcn/ui + TanStack Query + React Hook Form/Zod, com Supabase (PostgreSQL, Auth, Storage) e funções de servidor na Vercel.
 
 ## Estrutura
 
@@ -12,44 +12,44 @@ src/components/common/       campos, paginação, estados, histórico de altera�
 src/features/<módulo>/       api.ts (dados) · schema.ts (validação) · regras.ts (negócio) · telas
 src/lib/                     supabase, formatação, decimais, validadores de documentos
 supabase/migrations/         migrações SQL versionadas
-supabase/functions/          Edge Functions (operações que exigem service_role)
+api/                         funções de servidor da Vercel (operações que exigem service_role)
 supabase/tests/              testes SQL de regras e segurança
 ```
 
-## Implantação (primeira vez)
+## Implantação
 
-1. **Logotipo** — copie o arquivo original para `assets/logo-sheik.png`.
-2. **Projeto Supabase** — crie um projeto em supabase.com.
-3. **Banco** — no *SQL Editor*, execute em ordem:
-   - `supabase/migrations/20261119000100_fase1_seguranca.sql`
-   - `supabase/migrations/20261119000200_fase1_cadastros.sql`
-   - `supabase/migrations/20261119000300_fase2_estoque.sql`
-   - `supabase/migrations/20261119000400_fase3_comercial.sql`
-   - `supabase/migrations/20261119000500_fase4_compras.sql`
-   - `supabase/migrations/20261119000600_fase5_financeiro.sql`
-   - `supabase/migrations/20261119000700_fase6_logistica.sql`
-   - `supabase/migrations/20261119000800_fase7_relatorios.sql`
+**Ambiente atual (produção):** https://sheik-dos-pisos-erp.vercel.app
+- Banco: Supabase `sheik-dos-pisos-db` (plano Free, região São Paulo), criado pela integração
+  Supabase da Vercel Marketplace. As variáveis (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
+  `SUPABASE_SERVICE_ROLE_KEY`, `POSTGRES_URL_NON_POOLING`…) ficam no projeto da Vercel; localmente,
+  `npx vercel env pull .env.local` (arquivo ignorado pelo Git — contém segredos).
+- Painel do Supabase: `npx vercel integration open supabase`.
 
-   (ou, com a CLI: `npx supabase link --project-ref <ref>` e `npx supabase db push`)
-4. **Testes do banco** — execute `supabase/tests/fase1_regras.sql` e, **após criar o primeiro
-   usuário (passo 6)**, `supabase/tests/fase2_estoque.sql`, `fase3_comercial.sql`, `fase4_compras.sql`, `fase5_financeiro.sql`, `fase6_logistica.sql` e `fase7_relatorios.sql`. Devem aparecer as mensagens
-   `FASE n: TODOS OS TESTES PASSARAM` (rodam em transação com ROLLBACK, não gravam nada).
-5. **Autenticação** (*Authentication > Sign In / Providers* e *URL Configuration*):
-   - desative **Allow new users to sign up** (usuários são criados só pelo administrador);
-   - *Site URL*: endereço do sistema; *Redirect URLs*: inclua `<endereço>/redefinir-senha`;
-   - senha mínima: 10 caracteres.
-6. **Primeiro administrador** — em *Authentication > Users > Add user* (marque *Auto Confirm*).
-   O **primeiro** usuário criado recebe automaticamente o perfil Administrador.
-7. **Edge Function** de usuários:
-   ```
-   npx supabase login
-   npx supabase functions deploy admin-usuarios --project-ref <ref>
-   ```
-8. **Frontend** — copie `.env.example` para `.env`, preencha URL e chave *anon*, e rode:
-   ```
-   npm install
-   npm run dev        # http://localhost:5173
-   ```
+### Migrações e testes do banco
+As migrações em `supabase/migrations/` são aplicadas em ordem e registradas em
+`supabase_migrations.schema_migrations` (mesma tabela do Supabase CLI). Alternativas:
+- Supabase CLI: `npx supabase link --project-ref <ref>` e `npx supabase db push`;
+- SQL Editor: executar os arquivos em ordem.
+
+Os testes em `supabase/tests/` rodam em transação com ROLLBACK (não gravam nada) e devem exibir
+`FASE n: TODOS OS TESTES PASSARAM`. As fases 2 a 7 precisam de um administrador existente.
+
+### Configuração de autenticação (painel do Supabase)
+- *Authentication › Sign In / Providers*: desative **Allow new users to sign up**.
+- *Authentication › URL Configuration*: Site URL `https://sheik-dos-pisos-erp.vercel.app` e Redirect URL
+  `https://sheik-dos-pisos-erp.vercel.app/redefinir-senha`.
+- O **primeiro** usuário criado recebe automaticamente o perfil Administrador.
+
+### Desenvolvimento local
+```
+npx vercel env pull .env.local   # traz as variáveis do banco
+npm install
+npm run dev                      # http://localhost:5173 (sem /api)
+npx vercel dev                   # alternativa com as funções /api (criação de usuários)
+```
+
+### Publicar
+Envio ao GitHub (se o repositório estiver conectado na Vercel) ou `npx vercel --prod`.
 
 ## Comandos
 
@@ -63,7 +63,7 @@ supabase/tests/              testes SQL de regras e segurança
 
 - Autorização real no banco: **RLS** em todas as tabelas + função `tem_permissao(modulo, acao)`.
   A interface só esconde botões; quem decide é o servidor.
-- `service_role` usada apenas na Edge Function `admin-usuarios`, que valida a permissão do chamador.
+- `service_role` usada apenas na função de servidor `api/admin-usuarios.ts` (Vercel), que valida a permissão do chamador.
 - Auditoria automática (`public.auditoria`) de inserções, alterações e exclusões; leitura só por administradores.
 - Clientes não são excluídos (LGPD/histórico): são inativados ou bloqueados.
 - Sessão encerrada após 30 min de inatividade; usuário desativado tem login bloqueado no Auth.
