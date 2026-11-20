@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Paleta oficial SHEIK DOS PISOS (valores HSL equivalentes aos hex aprovados) */
+@layer base {
+  :root {
+    --background: 45 33% 95%;        /* #F7F5EF creme */
+    --foreground: 0 0% 8%;           /* #141414 */
+    --card: 0 0% 100%;               /* #FFFFFF */
+    --card-foreground: 0 0% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 8%;
+    --primary: 43 66% 50%;           /* #D4A52C dourado */
+    --primary-foreground: 0 0% 3%;   /* #080808 */
+    --gold-light: 43 78% 60%;        /* #E9BC4A */
+    --secondary: 45 22% 90%;
+    --secondary-foreground: 0 0% 8%;
+    --muted: 45 20% 92%;
+    --muted-foreground: 30 3% 45%;   /* #77736F */
+    --accent: 43 70% 93%;
+    --accent-foreground: 0 0% 8%;
+    --destructive: 3 58% 49%;        /* #C43C35 */
+    --destructive-foreground: 0 0% 100%;
+    --success: 150 60% 33%;          /* #218653 */
+    --info: 204 100% 36%;            /* #006FB9 safira */
+    --border: 40 14% 86%;
+    --input: 40 12% 80%;
+    --ring: 43 66% 50%;
+    --radius: 0.75rem;
+    --sidebar: 0 0% 3%;              /* #080808 */
+    --sidebar-2: 0 0% 8%;            /* #141414 */
+  }
+
+  * {
+    @apply border-border;
+  }
+  html,
+  body,
+  #root {
+    @apply h-full;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+/* Impressão / PDF de orçamentos e pedidos */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  .no-print,
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+  .documento {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+@layer components {
+  .scrollbar-fina {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(0 0% 25%) transparent;
+  }
+}

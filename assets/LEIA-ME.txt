@@ -1,0 +1,7 @@
+Identidade visual SHEIK DOS PISOS
+
+  logo-sheik.png       -> logotipo ORIGINAL em alta resolução (1254x1254). Não alterar.
+  logo-sheik-512.jpg   -> cópia reduzida da mesma arte, usada nas telas (menu, login, documentos).
+  favicon.png          -> ícone da aba do navegador (64x64), gerado a partir do original.
+
+Para trocar o logotipo, substitua logo-sheik.png e gere novamente as duas cópias.
