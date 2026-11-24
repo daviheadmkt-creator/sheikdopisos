@@ -7,10 +7,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox, Switch } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
+import { Input, NativeSelect } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { mensagemErro } from '@/lib/supabase'
+import { listarCategoriasSite } from '@/features/loja/produtosSite'
 import { atualizarCategoria, atualizarMarca, criarCategoria, criarMarca, listarCategorias, listarMarcas } from './api'
 
 export function CadastrosAuxiliares() {
@@ -21,6 +22,8 @@ export function CadastrosAuxiliares() {
 
   const categorias = useQuery({ queryKey: ['categorias'], queryFn: listarCategorias })
   const marcas = useQuery({ queryKey: ['marcas'], queryFn: listarMarcas })
+  // Categorias reais do site (via plugin); sem conexão, a lista fica vazia e mostra o aviso
+  const categoriasSite = useQuery({ queryKey: ['categorias-site'], queryFn: listarCategoriasSite, retry: false, staleTime: 10 * 60_000 })
 
   const [novaCategoria, setNovaCategoria] = useState('')
   const [revestimento, setRevestimento] = useState(false)
@@ -64,8 +67,12 @@ export function CadastrosAuxiliares() {
         <CardHeader>
           <CardTitle>Categorias</CardTitle>
           <CardDescription>
-            Categorias marcadas como <strong>revestimento</strong> exigem peças/caixa e m²/caixa no cadastro do produto.
+            Categorias marcadas como <strong>revestimento</strong> exigem peças/caixa e m²/caixa no cadastro do produto. Em
+            "No site", escolha em qual categoria da loja virtual os produtos aparecem.
           </CardDescription>
+          {categoriasSite.error && (
+            <p className="text-xs text-muted-foreground">Categorias do site indisponíveis agora: {mensagemErro(categoriasSite.error)}</p>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           {podeCriar && (
@@ -98,11 +105,29 @@ export function CadastrosAuxiliares() {
           ) : (
             <ul className="divide-y rounded-lg border">
               {categorias.data?.map((c) => (
-                <li key={c.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5">
                   <div className="flex items-center gap-2">
                     <span className={c.ativo ? '' : 'text-muted-foreground line-through'}>{c.nome}</span>
                     {c.revestimento && <Badge variant="info">Revestimento</Badge>}
                   </div>
+                  <NativeSelect
+                    className="h-8 w-full text-xs sm:ml-auto sm:w-56"
+                    value={c.site_categoria ?? ''}
+                    disabled={!podeEditar || editCategoria.isPending}
+                    onChange={(e) => editCategoria.mutate({ id: c.id, dados: { site_categoria: e.target.value || null } })}
+                    aria-label={`Categoria no site para ${c.nome}`}
+                    title="Categoria em que os produtos aparecem na loja virtual"
+                  >
+                    <option value="">No site: não vincular</option>
+                    {c.site_categoria && !categoriasSite.data?.some((s) => s.slug === c.site_categoria) && (
+                      <option value={c.site_categoria}>No site: {c.site_categoria}</option>
+                    )}
+                    {categoriasSite.data?.map((s) => (
+                      <option key={s.slug} value={s.slug}>
+                        No site: {s.caminho}
+                      </option>
+                    ))}
+                  </NativeSelect>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     {c.ativo ? 'Ativa' : 'Inativa'}
                     <Switch

@@ -94,7 +94,10 @@ export function VendasPage() {
               <TableBody>
                 {q.data.linhas.map((v) => (
                   <TableRow key={v.id} className="cursor-pointer" onClick={() => navigate(`/vendas/${v.id}`)}>
-                    <TableCell className="tabular-nums font-medium">#{v.numero}</TableCell>
+                    <TableCell className="whitespace-nowrap tabular-nums font-medium">
+                      #{v.numero}
+                      {v.origem === 'loja' && <Badge variant="info" className="ml-2">Site</Badge>}
+                    </TableCell>
                     <TableCell>{v.cliente?.nome}</TableCell>
                     <TableCell className="whitespace-nowrap">{v.vendedor_id ? nomeVendedor.get(v.vendedor_id) ?? '—' : '—'}</TableCell>
                     <TableCell className="whitespace-nowrap">{formatarData(v.confirmada_em ?? v.created_at)}</TableCell>

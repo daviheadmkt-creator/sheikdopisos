@@ -96,6 +96,8 @@ export interface VendaLista {
   id: string
   numero: number
   status: StatusVenda
+  /** 'loja' = pedido feito no site */
+  origem?: 'erp' | 'loja'
   cliente_id: string
   vendedor_id: string | null
   total: number
@@ -204,7 +206,7 @@ export async function converterOrcamentoEmVenda(id: string) {
 // ----------------------------------------------------------------- Vendas
 export async function listarVendas(f: FiltrosDocumentos & { clienteId?: string }) {
   let q = aplicarFiltros(
-    supabase.from('vendas').select('id,numero,status,cliente_id,vendedor_id,total,tipo_entrega,created_at,confirmada_em,cliente:clientes(nome)', { count: 'exact' }),
+    supabase.from('vendas').select('id,numero,status,origem,cliente_id,vendedor_id,total,tipo_entrega,created_at,confirmada_em,cliente:clientes(nome)', { count: 'exact' }),
     f,
     null,
   )

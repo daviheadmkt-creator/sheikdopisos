@@ -27,6 +27,7 @@ import {
 } from './api'
 import { ImagensProduto } from './ImagensProduto'
 import { EstoqueProdutoCard } from '@/features/estoque/EstoqueProdutoCard'
+import { ProdutoSiteCard } from '@/features/loja/ProdutoSiteCard'
 import { m2PorCaixaPorDimensoes, margemPercentual, markupPercentual } from './regras'
 import { ACABAMENTOS, produtoDbParaForm, produtoParaPayload, produtoSchema, produtoVazio, type ProdutoForm } from './schema'
 
@@ -356,6 +357,7 @@ export function ProdutoFormPage() {
             </div>
 
             <div className="space-y-6">
+              {!novo && produto.data && <ProdutoSiteCard produtoId={produto.data.id} podeEditar={pode('produtos', 'editar')} />}
               {!novo && produto.data && pode('estoque') && (
                 <EstoqueProdutoCard
                   produtoId={produto.data.id}

@@ -4,6 +4,7 @@ import {
   Boxes,
   ClipboardCheck,
   FileText,
+  Globe,
   Home,
   Landmark,
   Layers,
@@ -54,6 +55,7 @@ export const NAV: NavGrupo[] = [
       { rota: '/clientes', label: 'Clientes', icon: Users, modulo: 'clientes', fase: 1 },
       { rota: '/orcamentos', label: 'Orçamentos', icon: FileText, modulo: 'orcamentos', fase: 3 },
       { rota: '/vendas', label: 'Vendas', icon: ShoppingCart, modulo: 'vendas', fase: 3 },
+      { rota: '/loja', label: 'Pedidos da Loja', icon: Globe, modulo: 'vendas', fase: 8 },
     ],
   },
   {

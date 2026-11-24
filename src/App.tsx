@@ -29,6 +29,7 @@ const InventarioPage = lazy(() => import('@/features/inventario/InventarioPage')
 const OrcamentosPage = lazy(() => import('@/features/orcamentos/OrcamentosPage').then((m) => ({ default: m.OrcamentosPage })))
 const OrcamentoFormPage = lazy(() => import('@/features/orcamentos/OrcamentoFormPage').then((m) => ({ default: m.OrcamentoFormPage })))
 const VendasPage = lazy(() => import('@/features/vendas/VendasPage').then((m) => ({ default: m.VendasPage })))
+const LojaPedidosPage = lazy(() => import('@/features/loja/LojaPedidosPage').then((m) => ({ default: m.LojaPedidosPage })))
 const VendaFormPage = lazy(() => import('@/features/vendas/VendaFormPage').then((m) => ({ default: m.VendaFormPage })))
 const DocumentoImpressao = lazy(() => import('@/features/comercial/DocumentoImpressao').then((m) => ({ default: m.DocumentoImpressao })))
 const FornecedoresPage = lazy(() => import('@/features/fornecedores/FornecedoresPage').then((m) => ({ default: m.FornecedoresPage })))
@@ -99,6 +100,7 @@ export function App() {
               <Route path="vendas" element={<P modulo="vendas"><VendasPage /></P>} />
               <Route path="vendas/nova" element={<P modulo="vendas" acao="criar"><VendaFormPage /></P>} />
               <Route path="vendas/:id" element={<P modulo="vendas"><VendaFormPage /></P>} />
+              <Route path="loja" element={<P modulo="vendas"><LojaPedidosPage /></P>} />
 
               <Route path="fornecedores" element={<P modulo="fornecedores"><FornecedoresPage /></P>} />
               <Route path="fornecedores/novo" element={<P modulo="fornecedores" acao="criar"><FornecedorFormPage /></P>} />

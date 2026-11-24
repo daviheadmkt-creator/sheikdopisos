@@ -74,6 +74,31 @@ Envio ao GitHub (se o repositório estiver conectado na Vercel) ou `npx vercel -
 - Sessão encerrada após 30 min de inatividade; usuário desativado tem login bloqueado no Auth.
 - Valores monetários e quantidades em `NUMERIC`; no frontend trafegam como texto decimal, sem `float`.
 
+## Integração com a loja virtual (WooCommerce)
+
+O plugin **Sheik ERP Conector** (pasta `plugin/sheik-erp-conector` do projeto da loja) envia
+clientes e pedidos para `api/loja-webhook.ts`, que confere a assinatura HMAC
+(`LOJA_WEBHOOK_SECRET`, igual nos dois lados, mensagem válida por 5 min) e chama
+`loja_receber_cliente` / `loja_receber_pedido` (só `service_role`).
+
+- Cliente: localizado por ID da loja → CPF/CNPJ → e-mail único; o ERP é o cadastro mestre.
+- Pedido pago/aguardando → **venda em rascunho** (`origem = 'loja'`) com os preços do site;
+  o vendedor escolhe lote e confirma. Pisos: caixas do site viram m² no ERP.
+- SKU do site = SKU do ERP. Sem correspondência → "Pendente" na tela **Pedidos da Loja**
+  (`/loja`), com botão Reprocessar.
+- Cancelado/reembolsado no site cancela a venda em rascunho; confirmada fica "Atenção".
+- Testes: `supabase/tests/fase11_integracao_loja.sql` e `src/lib/lojaAssinatura.test.ts`.
+
+**Produtos ERP → site** (migração `20261124001400_loja_produtos_site.sql`):
+- `produtos.vender_no_site` (padrão ligado): com estoque, o plugin cria o produto no site
+  (busca a cada 10 min via evento `produtos_sincronizar`, cursor `alterado_em|id`).
+- Botão "Adicionar no site" (cartão Loja virtual do produto) → `api/loja-produtos.ts`, que
+  envia na hora para `LOJA_SITE_URL/wp-json/sheik-erp/v1/produtos` (mesma assinatura HMAC).
+- `categorias.site_categoria` = slug da categoria do site (escolhida em Produtos → Categorias).
+- Resultado de cada produto fica em `produto_site` (situação, link, estoque enviado).
+- Estoque no site = disponível − vendas do site em rascunho; pisos em caixas do maior lote.
+- Teste: `supabase/tests/fase12_produtos_site.sql`.
+
 ## Regras de estoque (Fase 2)
 
 - Saldos só mudam por funções do servidor (`registrar_movimentacao`, `reservar_estoque`,

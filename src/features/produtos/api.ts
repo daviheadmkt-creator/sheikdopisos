@@ -7,6 +7,8 @@ export interface Categoria {
   nome: string
   revestimento: boolean
   ativo: boolean
+  /** slug da subcategoria no site (loja virtual) */
+  site_categoria: string | null
 }
 export interface Marca {
   id: string
@@ -99,7 +101,7 @@ export async function salvarProduto(payload: ProdutoPayload, id?: string) {
 }
 
 export async function listarCategorias() {
-  const { data, error } = await supabase.from('categorias').select('id,nome,revestimento,ativo').order('nome')
+  const { data, error } = await supabase.from('categorias').select('id,nome,revestimento,ativo,site_categoria').order('nome')
   if (error) throw error
   return data as Categoria[]
 }
@@ -135,7 +137,7 @@ export async function criarCategoria(nome: string, revestimento: boolean) {
   if (error) throw error
 }
 
-export async function atualizarCategoria(id: string, dados: Partial<Pick<Categoria, 'ativo' | 'revestimento' | 'nome'>>) {
+export async function atualizarCategoria(id: string, dados: Partial<Pick<Categoria, 'ativo' | 'revestimento' | 'nome' | 'site_categoria'>>) {
   const { error } = await supabase.from('categorias').update(dados).eq('id', id)
   if (error) throw error
 }
